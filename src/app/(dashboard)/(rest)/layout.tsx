@@ -1,5 +1,4 @@
 import { AppHeader } from "@/components/app-header";
-import { SidebarSeparator } from "@/components/ui/sidebar";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
