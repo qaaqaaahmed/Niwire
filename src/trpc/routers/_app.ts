@@ -1,10 +1,7 @@
-import { baseProcedure, createTRPCRouter, protectedProcedure } from "../init";
-import { inngest } from "@/inngest/client";
+import { workflowsRouter } from "@/features/workflows/server/routers";
+import { createTRPCRouter } from "../init";
 export const appRouter = createTRPCRouter({
-  test: protectedProcedure.mutation(async ({}) => {
-    await inngest.send({ name: "extrapolate/ai" });
-    return { status: "Ok", message: "Request has been queed" };
-  }),
+  workflows: workflowsRouter,
 });
 // export type definition of API
 export type AppRouter = typeof appRouter;
