@@ -389,7 +389,7 @@ interface StateViewProps {
 export const LoadingState = ({ message }: StateViewProps) => {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 h-full bg-background rounded-md p-10">
-      <Loader2Icon className="size-8 animate-spin text-green-600" />
+      <Loader2Icon className="size-8 animate-spin text-primary" />
       <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );

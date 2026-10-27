@@ -1,7 +1,6 @@
 import { PAGINATION } from "@/config/constants";
 import prisma from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
-import { TRPCError } from "@trpc/server";
 
 import { generateSlug } from "random-word-slugs";
 import z from "zod";
@@ -15,6 +14,19 @@ export const workflowsRouter = createTRPCRouter({
       },
     });
   }),
+
+  getOne: protectedProcedure
+    .input(z.object({ workflowId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const workflow = await prisma.workflow.findUniqueOrThrow({
+        where: {
+          id: input.workflowId,
+          userId: ctx.auth.user.id,
+        },
+      });
+
+      return workflow;
+    }),
 
   getMany: protectedProcedure
     .input(
@@ -36,10 +48,7 @@ export const workflowsRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       // await new Promise((resolve) => setTimeout(resolve, 20000));
-      // throw new TRPCError({
-      //   code: "INTERNAL_SERVER_ERROR",
-      //   message: "fuck off",
-      // });
+
       const { page, pageSize, search } = input;
 
       const [items, totalCount] = await Promise.all([
@@ -80,6 +89,26 @@ export const workflowsRouter = createTRPCRouter({
         pageSize,
         search,
       };
+    }),
+
+  updateWorkflowName: protectedProcedure
+    .input(
+      z.object({
+        workflowId: z.string(),
+        name: z.string().trim().min(1, {
+          message: "The name of your workflow must have at least a character",
+        }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const updatedWorkflow = await prisma.workflow.update({
+        where: {
+          id: input.workflowId,
+          userId: ctx.auth.user.id,
+        },
+        data: { name: input.name },
+      });
+      return updatedWorkflow;
     }),
 
   remove: protectedProcedure
