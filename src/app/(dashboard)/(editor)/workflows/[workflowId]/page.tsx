@@ -1,3 +1,4 @@
+import { Editor } from "@/features/editor/components/editor";
 import { EditorHeader } from "@/features/editor/components/editor-header";
 import { prefetchSingleWorkflow } from "@/features/workflows/server/prefetch";
 import { requireTobeAuthenticated } from "@/lib/auth-utils";
@@ -19,6 +20,7 @@ const Page = async ({ params }: Props) => {
       <ErrorBoundary fallback={<p>ERROR</p>}>
         <Suspense fallback={<p>loading....</p>}>
           <EditorHeader workflowId={workflowId} />
+          <Editor workflowId={workflowId} />
         </Suspense>
       </ErrorBoundary>
     </HydrateClient>

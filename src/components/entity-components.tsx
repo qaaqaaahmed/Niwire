@@ -178,36 +178,35 @@ export const EntityItem = ({
             </div>
           </div>
 
-          {!!action ||
-            (!!onRemove && (
-              <div className="flex items-center justify-end gap-x-4">
-                {action}
-                {!!onRemove && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      asChild
-                      onClick={(e) => e.stopPropagation()}
+          {(!!action || !!onRemove) && (
+            <div className="flex items-center justify-end gap-x-4">
+              {action}
+              {!!onRemove && (
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                     >
-                      <Button
-                        variant="ghost"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVerticalIcon className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                      <MoreVerticalIcon className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
 
-                    <DropdownMenuContent
-                      align="end"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <DropdownMenuItem onClick={handleRemove}>
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            ))}
+                  <DropdownMenuContent
+                    align="end"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownMenuItem onClick={handleRemove}>
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>
@@ -232,7 +231,7 @@ export const EntityContainer = ({
       <div className="flex flex-col gap-y-8 max-w-7xl mx-auto w-full h-full">
         {header}
 
-        <div className="flex flex-col flex-1 min-h-0 gap-y-4">
+        <div className="flex flex-col gap-y-4">
           {search}
 
           {children}
