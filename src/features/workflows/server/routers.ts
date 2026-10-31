@@ -4,6 +4,8 @@ import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 import { generateSlug } from "random-word-slugs";
 import z from "zod";
+import { NodeType } from "../../../../generated/prisma/enums";
+import type { Edge, Node } from "@xyflow/react";
 
 export const workflowsRouter = createTRPCRouter({
   create: protectedProcedure.mutation(async ({ ctx }) => {
@@ -11,6 +13,13 @@ export const workflowsRouter = createTRPCRouter({
       data: {
         name: generateSlug(3),
         userId: ctx.auth.user.id,
+        nodes: {
+          create: {
+            type: NodeType.INITIAL,
+            position: { x: 0, y: 0 },
+            name: NodeType.INITIAL,
+          },
+        },
       },
     });
   }),
@@ -23,9 +32,35 @@ export const workflowsRouter = createTRPCRouter({
           id: input.workflowId,
           userId: ctx.auth.user.id,
         },
+        include: { nodes: true, connections: true },
       });
 
-      return workflow;
+      const nodes: Node[] = workflow.nodes.map((node) => {
+        return {
+          id: node.id,
+          name: node.name,
+          type: node.type,
+          position: node.position as { x: number; y: number },
+          data: node.data as Record<string, unknown>,
+        };
+      });
+
+      const edges: Edge[] = workflow.connections.map((connection) => {
+        return {
+          id: connection.id,
+          source: connection.fromNodeId,
+          target: connection.toNodeId,
+          sourceHandle: connection.fromOutput,
+          targetHandle: connection.toInput,
+        };
+      });
+      return {
+        workflow,
+        nodes,
+        edges,
+        name: workflow.name,
+        // id: workflow.id, hmmmm do i really need this
+      };
     }),
 
   getMany: protectedProcedure

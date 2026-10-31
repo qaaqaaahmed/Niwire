@@ -22,12 +22,10 @@ import React, { useEffect, useRef, useState } from "react";
 
 export const EditorSave = () => {
   return (
-    <div>
-      <Button size="sm">
-        <SaveIcon className="size-4" />
-        Save
-      </Button>
-    </div>
+    <Button size="sm">
+      <SaveIcon className="size-4" />
+      Save
+    </Button>
   );
 };
 
@@ -149,13 +147,15 @@ export const EditorInput = ({ workflowId }: { workflowId: string }) => {
     }
   }, [isEditing]);
 
+  //TODO: DO WE REALLY NEED THE EFFECT THAT RUNS WHENVER WORKFLOW.NAME CHANGES TO SETNAME TO WORKFLOW.NAME????
+
   if (isEditing) {
     return (
       <Input
         value={name}
         ref={inputRef}
         onChange={(e) => setName(e.target.value)}
-        className="h-7 max-w-[200px] w-auto text-muted-foreground "
+        className="h-7 min-w-[200px] w-auto text-muted-foreground "
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
         disabled={updateWorkflowName.isPending}
@@ -166,7 +166,7 @@ export const EditorInput = ({ workflowId }: { workflowId: string }) => {
   return (
     <BreadcrumbPage
       onClick={() => setIsEditing(true)}
-      className="hover:cursor-pointer"
+      className="hover:cursor-pointer font-semibold"
     >
       {workflow.name || "Untitled"}
     </BreadcrumbPage>

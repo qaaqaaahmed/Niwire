@@ -1,5 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@layer base {
+  @import "@xyflow/react/dist/style.css";
+}
+
 html {
   scrollbar-gutter: stable;
 }
