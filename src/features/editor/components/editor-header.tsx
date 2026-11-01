@@ -13,16 +13,35 @@ import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   useSuspenseWorkflow,
+  useUpdateWorkflow,
   useUpdateWorkflowName,
 } from "@/features/workflows/hooks/use-workflows";
+import { useAtomValue } from "jotai";
 
 import { SaveIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
+import { editorAtom } from "../store/atom";
+import { NodeType } from "../../../../generated/prisma/enums";
 
-export const EditorSave = () => {
+export const EditorSave = ({ workflowId }: { workflowId: string }) => {
+  const editor = useAtomValue(editorAtom);
+  const updateWorkflow = useUpdateWorkflow();
+
+  const handleSave = () => {
+    if (!editor) return;
+    const nodes = editor.getNodes().map((n) => {
+      return {
+        ...n,
+        type: n.type as NodeType,
+      };
+    });
+    const edges = editor.getEdges();
+
+    updateWorkflow.mutate({ id: workflowId, nodes, edges });
+  };
   return (
-    <Button size="sm">
+    <Button size="sm" disabled={updateWorkflow.isPending} onClick={handleSave}>
       <SaveIcon className="size-4" />
       Save
     </Button>
@@ -196,7 +215,7 @@ export const EditorHeader = ({ workflowId }: { workflowId: string }) => {
           </Breadcrumb>
         </div>
 
-        <EditorSave />
+        <EditorSave workflowId={workflowId} />
       </div>
     </div>
   );

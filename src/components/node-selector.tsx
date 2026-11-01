@@ -68,6 +68,8 @@ export const NodeSelector = ({
         }
       }
 
+      console.log("SEETTING A NON MANUAL TYPE -------->", selection.type);
+
       setNodes((nodes) => {
         // if there is an initialNodeType, it means this is their first so we just remove all the nodes
         //and just return one node which is the new selection
@@ -103,7 +105,7 @@ export const NodeSelector = ({
   );
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger>{children}</SheetTrigger>
+      <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
           <SheetTitle>What triggers this workflow</SheetTitle>
