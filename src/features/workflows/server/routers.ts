@@ -6,6 +6,9 @@ import { generateSlug } from "random-word-slugs";
 import z from "zod";
 import { NodeType } from "../../../../generated/prisma/enums";
 import type { Edge, Node } from "@xyflow/react";
+import { TRPCError } from "@trpc/server";
+
+// stopped here because i made type nullish
 
 export const workflowsRouter = createTRPCRouter({
   create: protectedProcedure.mutation(async ({ ctx }) => {
@@ -23,7 +26,102 @@ export const workflowsRouter = createTRPCRouter({
       },
     });
   }),
+  updateWorkflow: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        nodes: z.array(
+          z.object({
+            id: z.string().min(1),
+            type: z.nativeEnum(NodeType),
+            position: z.object({ x: z.number(), y: z.number() }),
+            data: z.record(z.string(), z.any()),
+          }),
+        ),
+        edges: z.array(
+          z.object({
+            id: z.string(),
+            source: z.string(),
+            target: z.string(),
+            sourceHandle: z.string().nullish(),
+            targetHandle: z.string().nullish(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { nodes, edges } = input;
 
+      // check if the workflow exists
+      const workflow = await prisma.workflow.findUniqueOrThrow({
+        where: { id: input.id, userId: ctx.auth.user.id },
+      });
+
+      if (!workflow) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workflow not found",
+        });
+      }
+      // checks if all the ids in the edges actually exist in the nodes sent by the user
+      const nodeIds = new Set(nodes.map((node) => node.id));
+      const isInvalid = edges.some(
+        (edge) => !nodeIds.has(edge.source) || !nodeIds.has(edge.target),
+      );
+
+      if (isInvalid) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid edges" });
+      }
+
+      // now delete all the nodes for this workflow and edges and create new ones
+      await prisma.$transaction(async (tx) => {
+        //delete nodes
+        await tx.node.deleteMany({
+          where: { workflowId: workflow.id },
+        });
+
+        // map the nodes to match what the db expects
+        const dbNodes = nodes.map((node) => {
+          return {
+            id: node.id,
+            type: node.type,
+            position: node.position,
+            data: node.data,
+            name: node.type,
+            workflowId: workflow.id,
+          };
+        });
+
+        // create the nodes
+        await tx.node.createMany({
+          data: dbNodes,
+        });
+
+        // map the connections to match the db
+        const connections = edges.map((edge) => {
+          return {
+            workflowId: workflow.id,
+            fromOutput: edge.sourceHandle || "main",
+            toInput: edge.targetHandle || "main",
+            fromNodeId: edge.source,
+            toNodeId: edge.target,
+          };
+        });
+
+        // create many connections
+        await tx.connection.createMany({
+          data: connections,
+        });
+
+        // update the workflow
+        await tx.workflow.update({
+          where: { id: workflow.id, userId: ctx.auth.user.id },
+          data: { updatedAt: new Date() },
+        });
+      });
+
+      return workflow;
+    }),
   getOne: protectedProcedure
     .input(z.object({ workflowId: z.string() }))
     .query(async ({ ctx, input }) => {
