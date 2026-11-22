@@ -39,6 +39,24 @@ const executionnodes: NodeTypeOptions[] = [
     description: "Make a HTTP Request",
     icon: GlobeIcon,
   },
+  {
+    type: NodeType.GEMINI,
+    label: "Gemini",
+    description: "Use gemini to generate text",
+    icon: `/logos/gemini.svg`,
+  },
+  {
+    type: NodeType.OPENAI,
+    label: "OpenAI",
+    description: "Uses OpenAI to generate text",
+    icon: `/logos/openai.svg`,
+  },
+  {
+    type: NodeType.ANTHROPIC,
+    label: "Anthropic",
+    description: "Uses Anthropic to generate text",
+    icon: `/logos/anthropic.svg`,
+  },
 ];
 
 interface NodeSelectorProps {
@@ -67,8 +85,6 @@ export const NodeSelector = ({
           return;
         }
       }
-
-      console.log("SEETTING A NON MANUAL TYPE -------->", selection.type);
 
       setNodes((nodes) => {
         // if there is an initialNodeType, it means this is their first so we just remove all the nodes
@@ -154,9 +170,13 @@ export const NodeSelector = ({
               >
                 <div className="flex items-center gap-6 w-full overflow-hidden">
                   {typeof Icon === "string" ? (
-                    <Image src={Icon} alt={node.label} />
+                    <img
+                      src={Icon}
+                      alt={node.label}
+                      className="size-5 object-contain rounded-sm"
+                    />
                   ) : (
-                    <Icon />
+                    <Icon className="size-5" />
                   )}
 
                   <div className="flex flex-col text-left">

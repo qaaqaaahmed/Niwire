@@ -96,9 +96,9 @@ export default Page;
 // newStore.setState({ count: 99, name: "Libka" });
 // console.log(store.getState());
 
-function userCanPick(selector) {
-  const product = { name: "Energy drink", price: 19.99, expiry: 2028 };
-  return selector(product);
-}
+// function userCanPick(selector) {
+//   const product = { name: "Energy drink", price: 19.99, expiry: 2028 };
+//   return selector(product);
+// }
 
-console.log(userCanPick((given) => given.price * 500));
+// console.log(userCanPick((given) => given.price * 500));

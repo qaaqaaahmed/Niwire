@@ -3,12 +3,15 @@ import { memo, useState } from "react";
 import { BaseExecutionNode } from "../base-execution-node";
 import { GlobeIcon } from "lucide-react";
 import { FormSchemaType, HttpRequestDialog } from "./dialog";
+import { useParams } from "next/navigation";
+import { useNodeStatus } from "@/hooks/use-node-status";
+import { fetchHttpRequestToken } from "./actions";
 
 type HttpRequestNodeData = {
   endpoint?: string;
   body?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  [key: string]: unknown;
+  variableName?: string;
 };
 
 type HttpRequestNodeType = Node<HttpRequestNodeData>;
@@ -23,6 +26,15 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
     : "Not Configured";
   const handleOpenDialog = () => setHttpRequestDialogOpen(true);
 
+  const { workflowId } = useParams<{ workflowId: string }>();
+
+  const status = useNodeStatus({
+    channel: `http-request:${workflowId}`,
+    topic: "status",
+    nodeId: props.id,
+    token: () => fetchHttpRequestToken({ workflowId }),
+  });
+
   const handleSubmit = (values: FormSchemaType) => {
     setNodes((nodes) =>
       nodes.map((node) => {
@@ -33,6 +45,7 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
               body: values.body,
               endpoint: values.endpoint,
               method: values.method,
+              variableName: values.variableName,
             },
           };
         }
@@ -46,9 +59,7 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
         open={httpRequestDialogOpen}
         onOpenChange={setHttpRequestDialogOpen}
         onSubmit={handleSubmit}
-        defaultBody={nodeData.body}
-        defaultUrl={nodeData.endpoint}
-        defaultMethod={nodeData.method}
+        defaultValues={nodeData}
       />
       <BaseExecutionNode
         {...props}
@@ -58,7 +69,7 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
         name="HTTP Request"
         description={description}
         icon={GlobeIcon}
-        status="initial"
+        status={status}
       />
     </>
   );
