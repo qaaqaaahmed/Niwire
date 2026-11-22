@@ -1,48 +1,55 @@
 // src/inngest/functions.ts
 import { inngest } from "./client";
-import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createGoogle } from "@ai-sdk/google";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { NonRetriableError } from "inngest";
+import prisma from "@/lib/db";
+import { topologicalSort } from "./utils";
+import { getExecutor } from "@/config/node-executor";
 
-const openai = createOpenAI();
-const google = createGoogle();
-const anthropic = createAnthropic({});
-
-export const processTask = inngest.createFunction(
-  { id: "extrapolate-ai", triggers: { event: "extrapolate/ai" } },
+export const executeWorkflow = inngest.createFunction(
+  { id: "execute-workflow", triggers: { event: "workflows/execute.workflow" } },
   async ({ event, step }) => {
-    await step.sleep("waiting", "5s");
-    const { steps: openaiSteps } = await step.ai.wrap(
-      "openai-generate-text",
-      generateText,
-      {
-        model: openai("gpt-4o"),
-        prompt:
-          "What would you see in a 24 year old and would earn your respect?",
-      },
-    );
+    const workflowId = event.data.workflowId;
 
-    const { steps: geminiSteps } = await step.ai.wrap(
-      "gemini-generate-text",
-      generateText,
-      {
-        model: google("gemini-3.5-flash"),
-        prompt:
-          "What would you see in a 24 year old and would earn your respect?",
-      },
-    );
+    if (!workflowId) {
+      throw new NonRetriableError(`WorkflowId Missing`);
+    }
 
-    const { steps: anthropicSteps } = await step.ai.wrap(
-      "anthropic-generate-text",
-      generateText,
-      {
-        model: anthropic("claude-sonnet-5-5"),
-        prompt:
-          "What would you see in a 24 year old and would earn your respect?",
-      },
-    );
+    const sortedNodes = await step.run("prepare-workflow", async () => {
+      // lets return sorted nodes to be executed before we start looping over them
+      const workflow = await prisma.workflow.findUnique({
+        where: {
+          id: workflowId,
+        },
+        include: { nodes: true, connections: true },
+      });
 
-    return { openaiSteps, geminiSteps, anthropicSteps };
+      if (!workflow) {
+        throw new NonRetriableError(
+          `Could not find the workflow for some reason`,
+        );
+      }
+
+      return topologicalSort(workflow.nodes, workflow.connections);
+    });
+
+    let context = event.data.initial || {};
+
+    for (const node of sortedNodes) {
+      // we need to find the executor call it with the node, step, context and workflowId,nodeId
+      const executor = getExecutor(node.type);
+      context = await executor({
+        nodeId: node.id,
+        step: step,
+        context: context,
+        data: node.data as Record<string, unknown>,
+        workflowId,
+      });
+    }
+
+    return {
+      workflowId,
+      result: context,
+    };
   },
 );
+// npx --ignore-scripts=false inngest-cli@latest dev

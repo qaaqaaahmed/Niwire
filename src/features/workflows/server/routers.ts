@@ -7,10 +7,26 @@ import z from "zod";
 import { NodeType } from "../../../../generated/prisma/enums";
 import type { Edge, Node } from "@xyflow/react";
 import { TRPCError } from "@trpc/server";
-
-// stopped here because i made type nullish
+import { inngest } from "@/inngest/client";
 
 export const workflowsRouter = createTRPCRouter({
+  executeWorkflow: protectedProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const workflow = await prisma.workflow.findUniqueOrThrow({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+        },
+      });
+
+      await inngest.send({
+        name: "workflows/execute.workflow",
+        data: { workflowId: workflow.id },
+      });
+
+      return workflow;
+    }),
   create: protectedProcedure.mutation(async ({ ctx }) => {
     return prisma.workflow.create({
       data: {

@@ -99,3 +99,20 @@ export const useUpdateWorkflow = () => {
     }),
   );
 };
+
+//hook to execute a workflow
+
+export const useExecuteWorkflow = () => {
+  const trpc = useTRPC();
+
+  return useMutation(
+    trpc.workflows.executeWorkflow.mutationOptions({
+      onSuccess: (data) => {
+        toast.success(`Processing workflow: ${data.id}`);
+      },
+      onError: (error) => {
+        toast.error(`Error occured processing workflow: ${error.message}`);
+      },
+    }),
+  );
+};

@@ -1,12 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const WorkflowHeader = () => {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
 
   const createWorkflow = useMutation(
     trpc.workflows.create.mutationOptions({
