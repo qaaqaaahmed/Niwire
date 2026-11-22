@@ -5,7 +5,7 @@ import {
   NodeStatusIndicator,
 } from "@/components/react-flow/node-status-indicator";
 import { WorkflowNode } from "@/components/workflow-node";
-import { NodeProps, Position } from "@xyflow/react";
+import { NodeProps, Position, useReactFlow } from "@xyflow/react";
 import { LucideIcon } from "lucide-react";
 import Image from "next/image";
 
@@ -28,11 +28,20 @@ export const BaseExecutionNode = ({
   status = "initial",
   icon: Icon,
 }: BaseExecutionNodeProps) => {
+  const { setNodes, setEdges } = useReactFlow();
+
+  const handleDelete = () => {
+    setNodes((nodes) => nodes.filter((node) => node.id !== id));
+    setEdges((edges) =>
+      edges.filter((edge) => edge.target !== id && edge.source !== id),
+    );
+  };
   return (
     <WorkflowNode
       name={name}
       description={description}
       onSettings={onSettings}
+      onDelete={handleDelete}
       showToolbar
     >
       <NodeStatusIndicator status={status}>

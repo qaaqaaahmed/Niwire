@@ -21,7 +21,17 @@ import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
 import { AddNodeButton } from "@/components/add-node-button";
 import { useSetAtom } from "jotai";
 import { editorAtom } from "../store/atom";
+import { NodeType } from "../../../../generated/prisma/enums";
+import { ExecuteWorkflow } from "./execute-workflow";
+import { ErrorState, LoadingState } from "@/components/entity-components";
 
+export const EditorError = () => {
+  return <ErrorState message="Error fetching the workflow" />;
+};
+
+export const EditorLoading = () => {
+  return <LoadingState message="Loading the workflow..." />;
+};
 export const Editor = ({ workflowId }: { workflowId: string }) => {
   const { data: workflow } = useSuspenseWorkflow({ workflowId });
   const [nodes, setNodes] = useState<Node[]>(workflow.nodes);
@@ -42,6 +52,10 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
   const onConnect: OnConnect = useCallback(
     (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
     [],
+  );
+
+  const hasManualWorkflowNode = nodes.some(
+    (node) => node.type === NodeType.MANUAL_TRIGGER,
   );
 
   return (
@@ -65,6 +79,12 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
         <Panel position="top-right">
           <AddNodeButton />
         </Panel>
+
+        {hasManualWorkflowNode && (
+          <Panel position="bottom-center">
+            <ExecuteWorkflow />
+          </Panel>
+        )}
       </ReactFlow>
     </div>
   );
